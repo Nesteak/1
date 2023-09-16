@@ -1,0 +1,42 @@
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import Updater, CallbackQueryHandler, CommandHandler, MessageHandler, Filters
+
+shoes_catalog = [    {        "image": "image1.jpg",        "description": "Описание кроссовок 1",        "price": 1000,        "characteristics": "Характеристики кроссовок 1"    },    {        "image": "image2.jpg",        "description": "Описание кроссовок 2",        "price": 1500,        "characteristics": "Характеристики кроссовок 2"    },    ...]
+def start(update, context):
+    keyboard = []
+    for i, shoe in enumerate(shoes_catalog):
+        keyboard.append([InlineKeyboardButton(f"Кроссовки {i+1}", callback_data=str(i))])
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    update.message.reply_text('Выберите кроссовки:', reply_markup=reply_markup)
+
+def button(update, context):
+    query = update.callback_query
+    shoe_index = int(query.data)
+    shoe = shoes_catalog[shoe_index]
+
+    # Отправка информации о выбранных кроссовках
+    context.bot.send_photo(chat_id=query.message.chat_id, photo=open(shoe["image"], 'rb'))
+    context.bot.send_message(chat_id=query.message.chat_id, text=shoe["description"])
+    context.bot.send_message(chat_id=query.message.chat_id, text=f"Цена: {shoe['price']} руб.")
+    context.bot.send_message(chat_id=query.message.chat_id, text=shoe["characteristics"])
+
+    query.message.reply_text('Пожалуйста, укажите адрес доставки кроссовок:')
+
+def address(update, context):
+    address = update.message.text
+    # Здесь можно добавить логику обработки адреса и оформления заказа
+
+def main():
+    updater = Updater('6250683086:AAECzAm9Nf0ehrpEU4A4lS_WfNqiF13pCFA', use_context=True)
+
+    dp = updater.dispatcher
+    dp.add_handler(CommandHandler('start', start))
+    dp.add_handler(CallbackQueryHandler(button))
+    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, address))
+
+    updater.start_polling()
+    updater.idle()
+
+if __name__ == '__main__':
+    main()
+
